@@ -126,4 +126,11 @@ const loadEvents = (dir) => {
 
 loadEvents(eventsPath);
 
+// Start HTTP server
+const server = require('./server');
+const port = process.env.PORT || 3000;
+server.listen(port, () => {
+  console.log(`HTTP server listening on port ${port}`);
+});
+
 client.login(process.env.DISCORD_TOKEN);

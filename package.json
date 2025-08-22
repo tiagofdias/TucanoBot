@@ -10,7 +10,7 @@
     "postinstall": "npm rebuild sharp && npm rebuild canvas"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": "18.17.0"
   },
   "dependencies": {
     "@alfr3xd/discordcards": "^1.3.1",
