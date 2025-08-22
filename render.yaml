@@ -1,13 +1,8 @@
 services:
   - type: web
     name: tucanobot
-    env: node
-    buildCommand: |
-      curl -sL https://deb.nodesource.com/setup_20.x | bash
-      apt-get update && apt-get install -y chromium
-      npm install --build-from-source
-    startCommand: node index.js
-    autoDeploy: false
+    env: docker
+    dockerfilePath: ./Dockerfile
     disk:
       name: data
       mountPath: /data
@@ -19,16 +14,8 @@ services:
         sync: false
       - key: CLIENT_ID
         sync: false
-      - key: NODE_VERSION
-        value: "20.11.1"
-      - key: SHARP_IGNORE_GLOBAL_LIBVIPS
-        value: "1"
       - key: DATABASE_PATH
         value: "/data/database.sqlite"
-      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
-        value: "true"
-      - key: PUPPETEER_EXECUTABLE_PATH
-        value: "/usr/bin/chromium"
     plan: free
     healthCheckPath: /
     buildFilter:
