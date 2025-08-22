@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node index.js",
-    "build": "echo 'No build step needed'"
+    "build": "npm install --build-from-source",
+    "postinstall": "npm rebuild sharp && npm rebuild canvas"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -23,7 +24,7 @@
     "openai": "^4.28.0",
     "puppeteer": "^24.16.2",
     "sequelize": "^6.37.0",
-    "sharp": "^0.33.0",
+    "sharp": "0.32.6",
     "sqlite3": "^5.1.6"
   }
 }

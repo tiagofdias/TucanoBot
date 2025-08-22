@@ -2,7 +2,9 @@ services:
   - type: web
     name: tucanobot
     env: node
-    buildCommand: npm install
+    buildCommand: |
+      apt-get update && apt-get install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
+      npm install --build-from-source
     startCommand: node index.js
     autoDeploy: false
     envVars:
@@ -14,3 +16,5 @@ services:
         sync: false
       - key: NODE_VERSION
         value: 18.0.0
+      - key: SHARP_IGNORE_GLOBAL_LIBVIPS
+        value: "1"
