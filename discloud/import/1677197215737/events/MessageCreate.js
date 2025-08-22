@@ -11,8 +11,8 @@ const { Configuration, OpenAIApi } = require('openai');
 
 //AI
 const configuration = new Configuration({
-	organization: 'org-s3Hpc4kxpaebLgL4UxYiCno3',
-	apiKey: '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',
+	organization: process.env.OPENAI_ORG || undefined,
+	apiKey: process.env.OPENAI_API_KEY || undefined,
 });
 const openai = new OpenAIApi(configuration);
 const msgLengthLimit = 2000;
