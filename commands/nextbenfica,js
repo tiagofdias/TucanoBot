@@ -1,0 +1,166 @@
+const { SlashCommandBuilder } = require('discord.js');
+const https = require('https');
+
+module.exports = {
+    data: new SlashCommandBuilder()
+        .setName('nextbenfica')
+        .setDescription('Check when is the next Benfica match (Free API)'),
+    
+    async execute(interaction) {
+        await interaction.deferReply();
+
+        try {
+            // Use TheSportsDB (completely free, no registration required)
+            const benficaTeamId = 134108;
+            
+            const options = {
+                hostname: 'www.thesportsdb.com',
+                path: `/api/v1/json/3/eventsnext.php?id=${benficaTeamId}`,
+                method: 'GET'
+            };
+
+            const req = https.request(options, (res) => {
+                let data = '';
+
+                res.on('data', (chunk) => {
+                    data += chunk;
+                });
+
+                res.on('end', async () => {
+                    try {
+                        const response = JSON.parse(data);
+                        
+                        if (response.events && response.events.length > 0) {
+                            // Filter to only Benfica matches (API sometimes returns random matches)
+                            const benficaMatches = response.events.filter(match => 
+                                match.strHomeTeam === 'Benfica' || match.strAwayTeam === 'Benfica'
+                            );
+                            
+                            if (benficaMatches.length > 0) {
+                                const nextMatch = benficaMatches[0];
+                                const matchDate = new Date(nextMatch.dateEvent + 'T' + nextMatch.strTime);
+                                const now = new Date();
+                                
+                                // Calculate time until match
+                                const timeDiff = matchDate.getTime() - now.getTime();
+                                const daysUntil = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+                                const hoursUntil = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                
+                                let timeString = '';
+                                if (timeDiff > 0) {
+                                    if (daysUntil > 0) {
+                                        timeString = `in ${daysUntil} days and ${hoursUntil} hours`;
+                                    } else if (hoursUntil > 0) {
+                                        timeString = `in ${hoursUntil} hours`;
+                                    } else {
+                                        timeString = 'starting soon!';
+                                    }
+                                } else {
+                                    timeString = 'match already started or finished';
+                                }
+                                
+                                const isHome = nextMatch.strHomeTeam === 'Benfica';
+                                const opponent = isHome ? nextMatch.strAwayTeam : nextMatch.strHomeTeam;
+                                const venue = isHome ? 'at Estádio da Luz (Home)' : `at ${nextMatch.strVenue} (Away)`;
+                                
+                                const response_text = `🔴⚪️ **Next Benfica Match** 🦅\n\n` +
+                                    `**Benfica ${isHome ? 'vs' : '@'} ${opponent}**\n` +
+                                    `📅 Date: ${matchDate.toLocaleDateString('en-GB')}\n` +
+                                    `⏰ Time: ${matchDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}\n` +
+                                    `🏆 Competition: ${nextMatch.strLeague}\n` +
+                                    `🏟️ Venue: ${venue}\n` +
+                                    `⏳ **${timeString}**\n\n` +
+                                    `*Automatic red theme will activate 2 hours before kickoff!* 🔴\n` +
+                                    `**FORÇA BENFICA!** 🦅❤️`;
+                                
+                                await interaction.editReply(response_text);
+                            } else {
+                                await interaction.editReply('❌ No upcoming Benfica matches found. Trying alternative method...');
+                                await this.tryAlternativeAPI(interaction);
+                            }
+                        } else {
+                            // Try alternative approach - get league fixtures
+                            await this.tryAlternativeAPI(interaction);
+                        }
+                    } catch (parseError) {
+                        console.error('Parse error:', parseError);
+                        await interaction.editReply('❌ Error parsing match data from free API. The service might be temporarily unavailable.');
+                    }
+                });
+            });
+
+            req.on('error', async (error) => {
+                console.error('Request error:', error);
+                await interaction.editReply('❌ Error fetching match data from free API. Please check your internet connection.');
+            });
+
+            req.setTimeout(10000, () => {
+                req.destroy();
+                interaction.editReply('❌ Request timeout. The free API is taking too long to respond.');
+            });
+
+            req.end();
+
+        } catch (error) {
+            console.error('Command error:', error);
+            await interaction.editReply('❌ An error occurred while fetching Benfica match information.');
+        }
+    },
+
+    async tryAlternativeAPI(interaction) {
+        // Try getting Portuguese League fixtures and filter for Benfica
+        const options = {
+            hostname: 'www.thesportsdb.com',
+            path: '/api/v1/json/3/eventsround.php?id=4344&r=1&s=2025-2026', // Portuguese Liga
+            method: 'GET'
+        };
+
+        const req = https.request(options, (res) => {
+            let data = '';
+
+            res.on('data', (chunk) => {
+                data += chunk;
+            });
+
+            res.on('end', async () => {
+                try {
+                    const response = JSON.parse(data);
+                    
+                    if (response.events) {
+                        const benficaMatches = response.events
+                            .filter(match => 
+                                match.strHomeTeam === 'Benfica' || match.strAwayTeam === 'Benfica'
+                            )
+                            .filter(match => {
+                                const matchDate = new Date(match.dateEvent + 'T' + match.strTime);
+                                return matchDate > new Date();
+                            });
+                        
+                        if (benficaMatches.length > 0) {
+                            const nextMatch = benficaMatches[0];
+                            const matchDate = new Date(nextMatch.dateEvent + 'T' + nextMatch.strTime);
+                            
+                            await interaction.editReply(`🔴⚪️ **Next Benfica Match Found!** 🦅\n\n` +
+                                `**${nextMatch.strHomeTeam} vs ${nextMatch.strAwayTeam}**\n` +
+                                `📅 ${matchDate.toLocaleDateString('en-GB')} at ${matchDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}\n` +
+                                `🏆 ${nextMatch.strLeague}\n\n` +
+                                `*Found via Portuguese League fixtures* ⚽`);
+                        } else {
+                            await interaction.editReply('❌ No upcoming Benfica matches found in current league fixtures. They might be between seasons or the free APIs need updating.');
+                        }
+                    } else {
+                        await interaction.editReply('❌ No match data available from the free APIs at this time.');
+                    }
+                } catch (error) {
+                    await interaction.editReply('❌ Could not find Benfica matches in alternative API either.');
+                }
+            });
+        });
+
+        req.on('error', async (error) => {
+            await interaction.editReply('❌ Alternative API also failed.');
+        });
+
+        req.end();
+    }
+};

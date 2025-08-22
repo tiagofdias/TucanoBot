@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: tucanobot
+    env: node
+    buildCommand: npm install
+    startCommand: node index.js
+    autoDeploy: false
+    envVars:
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: GUILD_ID
+        sync: false
+      - key: CLIENT_ID
+        sync: false
+      - key: NODE_VERSION
+        value: 18.0.0
