@@ -1,31 +1,10 @@
 require('dotenv').config();
 const AutoDelete = require('../models/AutoDelete');
-const CHATGPT = require('../models/CHATGPT');
 const AutoPublish = require('../models/AutoPublish');
 const Suggestions = require('../models/Suggestions');
 const AutoScreenshot = require('../models/AutoScreenshot');
 const { Events, EmbedBuilder, ChannelType, AttachmentBuilder } = require('discord.js');
-const OpenAI = require('openai');
 const puppeteer = require('puppeteer');
-
-// AI client (optional – disabled if no key)
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-let openai = null;
-if (OPENAI_API_KEY && OPENAI_API_KEY.trim() !== '') {
-	try {
-		openai = new OpenAI({
-			organization: process.env.OPENAI_ORG || undefined,
-			apiKey: OPENAI_API_KEY,
-		});
-	} catch (e) {
-		console.log('Failed to init OpenAI client, AI disabled:', e.message);
-		openai = null;
-	}
-} else {
-	console.log('OpenAI disabled: missing OPENAI_API_KEY environment variable.');
-}
-const MSG_LENGTH_LIMIT = 2000;
-const AI_SYSTEM_PROMPT = 'You are a friendly chatbot in Discord.';
 
 // Screenshot helper (kept small & self‑contained)
 async function takeWebsiteScreenshot(message, url) {
