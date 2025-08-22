@@ -2,22 +2,9 @@ services:
   - type: web
     name: tucanobot
     env: docker
-    dockerfilePath: ./Dockerfile
-    disk:
-      name: data
-      mountPath: /data
-      sizeGB: 1
-    envVars:
-      - key: DISCORD_TOKEN
-        sync: false
-      - key: GUILD_ID
-        sync: false
-      - key: CLIENT_ID
-        sync: false
-      - key: DATABASE_PATH
-        value: "/data/database.sqlite"
-    plan: free
-    healthCheckPath: /
+  dockerfilePath: ./Dockerfile
+  plan: free
+  healthCheckPath: /
     buildFilter:
       paths:
         - package.json
