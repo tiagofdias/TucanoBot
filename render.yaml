@@ -2,10 +2,7 @@ services:
   - type: web
     name: tucanobot
     env: node
-    buildCommand: |
-      apt-get update && apt-get install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev chromium
-      npm install --build-from-source
-      npx puppeteer browsers install chrome
+    buildCommand: npm install --build-from-source
     startCommand: node index.js
     autoDeploy: false
     disk:
@@ -20,12 +17,20 @@ services:
       - key: CLIENT_ID
         sync: false
       - key: NODE_VERSION
-        value: "18.17.0"
+        value: "20.11.1"
       - key: SHARP_IGNORE_GLOBAL_LIBVIPS
         value: "1"
-      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
-        value: "true"
-      - key: PUPPETEER_EXECUTABLE_PATH
-        value: "/usr/bin/chromium"
       - key: DATABASE_PATH
         value: "/data/database.sqlite"
+    plan: free
+    healthCheckPath: /
+    buildFilter:
+      paths:
+        - package.json
+        - package-lock.json
+        - index.js
+        - database/**
+        - models/**
+        - commands/**
+        - events/**
+        - utils/**
