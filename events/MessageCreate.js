@@ -14,7 +14,7 @@ let openai = null;
 if (OPENAI_API_KEY && OPENAI_API_KEY.trim() !== '') {
 	try {
 		openai = new OpenAI({
-			organization: 'org-s3Hpc4kxpaebLgL4UxYiCno3',
+			organization: process.env.OPENAI_ORG || undefined,
 			apiKey: OPENAI_API_KEY,
 		});
 	} catch (e) {
