@@ -129,8 +129,12 @@ loadEvents(eventsPath);
 // Start HTTP server
 const server = require('./server');
 const port = process.env.PORT || 3000;
-server.listen(port, () => {
-  console.log(`HTTP server listening on port ${port}`);
+server.listen(port, '0.0.0.0', () => {
+  console.log(`HTTP server listening on port ${port} (0.0.0.0)`);
 });
 
-client.login(process.env.DISCORD_TOKEN);
+// Initialize Discord bot
+client.login(process.env.DISCORD_TOKEN).catch(error => {
+  console.error('Failed to login to Discord:', error);
+  process.exit(1);
+});

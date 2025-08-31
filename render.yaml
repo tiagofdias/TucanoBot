@@ -2,9 +2,9 @@ services:
   - type: web
     name: tucanobot
     env: docker
-  dockerfilePath: ./Dockerfile
-  plan: free
-  healthCheckPath: /
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /
     buildFilter:
       paths:
         - package.json

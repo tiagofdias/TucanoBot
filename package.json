@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node index.js",
-    "build": "npm install --build-from-source && npm rebuild sharp && npm rebuild canvas",
+    "build": "npm ci --build-from-source && npm rebuild sharp && npm rebuild canvas",
     "postinstall": "npm rebuild sharp && npm rebuild canvas"
   },
   "engines": {
