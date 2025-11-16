@@ -26,7 +26,7 @@ let status = [
 	  url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
 	},
 		{
-	  name: 'The end of the word',
+	  name: 'GTA VI',
 	  type: ActivityType.Streaming,
 	  url: 'https://www.youtube.com/watch?v=npSctPLfIDo',
 	},
@@ -36,6 +36,14 @@ let status = [
 	},
 	{
 	  name: "Benfica",
+	  type: ActivityType.Watching,
+	},
+	{
+	  name: "Afonso wasting money",
+	  type: ActivityType.Watching,
+	},
+	{
+	  name: "PPAP videos",
 	  type: ActivityType.Watching,
 	},
 	{

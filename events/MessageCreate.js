@@ -3,8 +3,14 @@ const AutoDelete = require('../models/AutoDelete');
 const AutoPublish = require('../models/AutoPublish');
 const Suggestions = require('../models/Suggestions');
 const AutoScreenshot = require('../models/AutoScreenshot');
+const CHATGPT = require('../models/CHATGPT');
 const { Events, EmbedBuilder, ChannelType, AttachmentBuilder } = require('discord.js');
 const puppeteer = require('puppeteer');
+
+// ChatGPT is disabled - set openai to null
+const openai = null;
+const MSG_LENGTH_LIMIT = 500;
+const AI_SYSTEM_PROMPT = 'You are a helpful assistant.';
 
 // Screenshot helper (kept small & self‑contained)
 async function takeWebsiteScreenshot(message, url) {

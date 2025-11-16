@@ -30,7 +30,8 @@ module.exports = {
 
                             if (queryResult) {
                                 const role = guild.roles.cache.get(queryResult.RoleID);
-                                await guild.members.fetch();
+                                // Fetch with timeout to avoid blocking
+                                await guild.members.fetch().catch(err => console.log('Could not fetch members:', err.message));
 
                                 const membersNotInVoice = guild.members.cache.filter((member) => {
                                     return member.roles.cache.has(role.id) && !member.voice.channel;
