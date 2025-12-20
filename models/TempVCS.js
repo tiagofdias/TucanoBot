@@ -5,8 +5,8 @@ module.exports = class TempVCS extends Model {
         return super.init({
             ServerID: { type: DataTypes.STRING, allowNull: false},
             VCID: { type: DataTypes.STRING, allowNull: false, unique: true},
-            UserLimit: { type: DataTypes.NUMBER, defaultValue: 5},
-            BitRate: { type: DataTypes.NUMBER, defaultValue: 96000},
+            UserLimit: { type: DataTypes.INTEGER, defaultValue: 5},
+            BitRate: { type: DataTypes.INTEGER, defaultValue: 96000},
         }, {
             tableName: 'TempVCS',
             timestamps: true,
