@@ -4,7 +4,7 @@ require('dotenv').config();
 const path = require('path');
 const sequelize = require(path.join(__dirname, '..', 'database', 'database'));
 const Level = require(path.join(__dirname, '..', 'models', 'Level'));
-const cumulative = require(path.join(__dirname, '..', 'utils', 'calculateLevelXp'));
+const cumulative = require(path.join(__dirname, '..', 'utils', 'CalculateLevelXP'));
 
 // Initialize Sequelize models
 Level.init(sequelize);

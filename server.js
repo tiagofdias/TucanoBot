@@ -1,20 +1,58 @@
-const http = require('http');
+const express = require('express');
+const session = require('express-session');
+const cors = require('cors');
+const path = require('path');
 
-const server = http.createServer((req, res) => {
-    if (req.url === '/' || req.url === '/health') {
-        res.writeHead(200, { 'Content-Type': 'text/plain' });
-        return res.end('ok');
+// Import routes
+const authRoutes = require('./routes/auth');
+const guildsRoutes = require('./routes/guilds');
+const levelsRoutes = require('./routes/levels');
+const birthdaysRoutes = require('./routes/birthdays');
+const autoRoutes = require('./routes/auto');
+const settingsRoutes = require('./routes/settings');
+
+const app = express();
+
+// Middleware
+app.use(cors({
+    origin: process.env.DASHBOARD_URL || true,
+    credentials: true
+}));
+app.use(express.json());
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'tucanobot-secret-key-change-in-production',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     }
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('not found');
+}));
+
+// Serve static dashboard files
+app.use('/dashboard', express.static(path.join(__dirname, 'dashboard')));
+
+// Health check
+app.get('/', (req, res) => {
+    res.send('ok');
 });
 
-// Ensure server listens on 0.0.0.0 for Render
-if (require.main === module) {
-    const port = process.env.PORT || 3000;
-    server.listen(port, '0.0.0.0', () => {
-        console.log(`Server running on port ${port}`);
-    });
-}
+app.get('/health', (req, res) => {
+    res.send('ok');
+});
 
-module.exports = server;
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/guilds', guildsRoutes);
+app.use('/api/guilds', levelsRoutes);
+app.use('/api/guilds', birthdaysRoutes);
+app.use('/api/guilds', autoRoutes);
+app.use('/api/guilds', settingsRoutes);
+
+// Dashboard SPA fallback - serve index.html for all dashboard routes
+app.get('/dashboard/*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dashboard', 'index.html'));
+});
+
+module.exports = app;

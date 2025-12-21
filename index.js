@@ -125,16 +125,21 @@ const loadEvents = (dir) => {
 };
 
 loadEvents(eventsPath);
-
-// Start HTTP server
-const server = require('./server');
-const port = process.env.PORT || 3000;
-server.listen(port, '0.0.0.0', () => {
-  console.log(`HTTP server listening on port ${port} (0.0.0.0)`);
-});
+// Make Discord client available globally for API routes
+global.discordClient = client;
 
 // Initialize Discord bot
-client.login(process.env.DISCORD_TOKEN).catch(error => {
+client.login(process.env.DISCORD_TOKEN).then(() => {
+  console.log('Discord bot logged in successfully');
+  
+  // Start HTTP server after bot is ready
+  const server = require('./server');
+  const port = process.env.PORT || 3000;
+  server.listen(port, '0.0.0.0', () => {
+    console.log(`HTTP server listening on port ${port} (0.0.0.0)`);
+    console.log(`Dashboard available at http://localhost:${port}/dashboard`);
+  });
+}).catch(error => {
   console.error('Failed to login to Discord:', error);
   process.exit(1);
 });

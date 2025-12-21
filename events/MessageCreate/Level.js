@@ -58,7 +58,7 @@ module.exports = {
 				const query = await Level.findOne({ where: { ServerID: message.guild.id, MemberID: message.author.id } });
 
 				// Unified logic for both existing and new users using cumulative XP model.
-				const cumulative = require(path.join(__dirname, '..', '..', 'utils', 'calculateLevelXp'));
+				const cumulative = require(path.join(__dirname, '..', '..', 'utils', 'CalculateLevelXP'));
 
 				let record = query;
 				if (!record) {
@@ -79,15 +79,12 @@ module.exports = {
 				while (record.xp >= cumulative(newLevel + 1) && newLevel < 500) {
 					newLevel++;
 				}
-				const leveledUp = newLevel !== record.level;
 				record.level = newLevel;
 				record.xplevel = record.xp - cumulative(newLevel); // progress inside current level
 
 				await record.save();
 
-				if (leveledUp) {
-					try { await message.member.send(`🎉 ${message.member} leveled up to **Level ${record.level}**!`); } catch {}
-				}
+				// Level-up DMs disabled - too annoying for users
 
 				cooldowns.add(message.author.id);
 				setTimeout(() => cooldowns.delete(message.author.id), 60000);

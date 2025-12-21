@@ -55,7 +55,7 @@ module.exports = {
         return interaction.editReply({ content: 'This user has no rank data yet.' });
       }
 
-  const cumulative = require('../utils/calculateLevelXp');
+  const cumulative = require('../utils/CalculateLevelXP');
   let level = count.level;
   // Progress inside current level already stored, but recompute for safety
   const levelStart = cumulative(level);

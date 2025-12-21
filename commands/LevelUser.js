@@ -131,7 +131,7 @@ module.exports = {
             const member = interaction.guild.members.cache.get(level.MemberID);
             if (member) {
               // Use new cumulative XP formula to match /rank command
-              const cumulative = require('../utils/calculateLevelXp');
+              const cumulative = require('../utils/CalculateLevelXP');
               const levelStart = cumulative(level.level);
               const nextLevelStart = cumulative(level.level + 1);
               let currentXP = level.xp - levelStart; // XP progress in current level
