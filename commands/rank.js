@@ -22,18 +22,18 @@ module.exports = {
         return interaction.reply({ content: 'You can only run this command inside a server.', flags: 64 });
       }
 
+      // CRITICAL: Defer immediately to prevent timeout (must respond within 3 seconds)
+      await interaction.deferReply({ flags: 64 });
+
       // Use the specified user or the command author
       const targetUser = interaction.options.getUser('user') || interaction.user;
       const Member = targetUser.id;
       
       if (targetUser.bot) {
-        return interaction.reply({ content: 'Bots cannot be ranked.', flags: 64 });
+        return interaction.editReply({ content: 'Bots cannot be ranked.' });
       }
 
-      // Reply immediately to prevent timeout
-      await interaction.reply({ content: '🔄 Generating your rank card...', flags: 64 });
-
-      // Now do the heavy work after replying
+      // Now do the heavy work after deferring
       const member = await interaction.guild.members.fetch(Member).catch(err => {
         console.error('Failed to fetch member:', err);
         return null;

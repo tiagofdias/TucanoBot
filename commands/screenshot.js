@@ -13,7 +13,7 @@ module.exports = {
         ),
 
     async execute(interaction) {
-        await interaction.deferReply({ ephemeral: true }); // ✅ Make command only visible to user
+        await interaction.deferReply({ flags: 64 }); // Make command only visible to user
         
         const url = interaction.options.getString('url');
         
@@ -27,7 +27,7 @@ module.exports = {
                         .setDescription('Please provide a valid URL starting with http:// or https://')
                         .setColor('#ED4245')
                 ],
-                ephemeral: true // ✅ Error message also only visible to user
+                flags: 64 // Error message also only visible to user
             });
         }
 
@@ -85,7 +85,7 @@ module.exports = {
             await interaction.editReply({ 
                 embeds: [embed], 
                 files: [attachment],
-                ephemeral: true // ✅ Screenshot only visible to user
+                flags: 64 // Screenshot only visible to user
             });
             
         } catch (error) {
@@ -100,7 +100,7 @@ module.exports = {
             
             await interaction.editReply({ 
                 embeds: [errorEmbed],
-                ephemeral: true // ✅ Error message only visible to user
+                flags: 64 // Error message only visible to user
             });
             
         } finally {

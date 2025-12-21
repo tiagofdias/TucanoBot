@@ -15,6 +15,6 @@ module.exports = {
             .setFooter({ text: 'Manage your server settings, levels, birthdays, and more!' })
             .setTimestamp();
         
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply({ embeds: [embed], flags: 64 });
     },
 };
