@@ -51,7 +51,7 @@ app.use('/api/guilds', autoRoutes);
 app.use('/api/guilds', settingsRoutes);
 
 // Dashboard SPA fallback - serve index.html for all dashboard routes
-app.get('/dashboard/*', (req, res) => {
+app.get('/dashboard/{*splat}', (req, res) => {
     res.sendFile(path.join(__dirname, 'dashboard', 'index.html'));
 });
 
