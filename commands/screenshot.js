@@ -54,8 +54,8 @@ module.exports = {
             
             // Set timeout and navigate
             await page.goto(url, { 
-                waitUntil: 'networkidle2', 
-                timeout: 15000 
+                waitUntil: 'domcontentloaded', 
+                timeout: 30000 
             });
             
             // Wait a bit for dynamic content to load (using Promise instead of page.waitForTimeout)

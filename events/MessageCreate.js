@@ -34,7 +34,7 @@ async function takeWebsiteScreenshot(message, url) {
 			'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
 		);
 		console.log(`[SCREENSHOT] Navigating to: ${url}`);
-		await page.goto(url, { waitUntil: 'networkidle2', timeout: 10000 });
+		await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 		await new Promise((r) => setTimeout(r, 2000));
 		console.log(`[SCREENSHOT] Taking screenshot...`);
 		const screenshot = await page.screenshot({ type: 'png', fullPage: false });
@@ -47,7 +47,10 @@ async function takeWebsiteScreenshot(message, url) {
 		await message.reply({ embeds: [embed], files: [attachment] });
 		console.log(`[SCREENSHOT] Screenshot sent successfully!`);
 	} catch (err) {
-		console.log(`Screenshot error: ${err}`);
+		console.error(`[SCREENSHOT ERROR] ${url}:`, err.message);
+		try {
+			await message.reply(`⚠️ Could not screenshot: ${err.message}`);
+		} catch {}
 	} finally {
 		if (browser) await browser.close().catch(() => {});
 	}
