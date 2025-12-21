@@ -67,20 +67,20 @@ module.exports = {
       let discriminator = member.user.discriminator;
       let status = member.presence?.status || 'offline';
 
-      // Get rank position
-      const position = await Level.sequelize.query(`
-        SELECT COUNT(*) + 1 as position FROM Level WHERE ServerID = :serverId AND xp > ( SELECT xp FROM Level WHERE ServerID = :serverId AND MemberID = :memberId)`,
-        {
-          replacements: {
-            serverId: interaction.guildId,
-            memberId: Member
-          },
-          type: QueryTypes.SELECT
-        }
-      ).catch(err => {
+      // Get rank position - use Sequelize count for better compatibility
+      let rankPosition = 1;
+      try {
+        const higherRanked = await Level.count({
+          where: {
+            ServerID: interaction.guildId.toString(),
+            xp: { [Op.gt]: count.xp }
+          }
+        });
+        rankPosition = higherRanked + 1;
+      } catch (err) {
         console.error('Rank query error:', err);
-        return [{ position: 0 }];
-      });
+        rankPosition = 1;
+      }
 
       try {
         // Use the beautiful clean rank card designer
@@ -91,7 +91,7 @@ module.exports = {
           level: level,
           currentXP: currentXP,
           requiredXP: requiredXP,
-          rank: position[0].position,
+          rank: rankPosition,
           status: status
         });
 
@@ -111,7 +111,7 @@ module.exports = {
             level: level,
             currentXP: currentXP,
             requiredXP: requiredXP,
-            rank: position[0].position,
+            rank: rankPosition,
             status: status
           });
 
@@ -126,7 +126,7 @@ module.exports = {
             if (!canvacord) canvacord = require('canvacord');
             const rank = new canvacord.Rank()
               .setAvatar(member.user.displayAvatarURL({ size: 256 }))
-              .setRank(position[0].position)
+              .setRank(rankPosition)
               .setLevel(level)
               .setCurrentXP(currentXP)
               .setRequiredXP(requiredXP)
@@ -141,7 +141,7 @@ module.exports = {
           } catch (fallbackError) {
             console.error('All rank card methods failed:', fallbackError);
             await interaction.editReply({ 
-              content: `**${username}**\nLevel: ${level}\nXP: ${currentXP.toLocaleString()} / ${requiredXP.toLocaleString()}\nRank: #${position[0].position}` 
+              content: `**${username}**\nLevel: ${level}\nXP: ${currentXP.toLocaleString()} / ${requiredXP.toLocaleString()}\nRank: #${rankPosition}` 
             });
           }
         }
