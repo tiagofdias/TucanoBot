@@ -76,8 +76,6 @@ module.exports = {
                                             leveledUp = true;
                                         }
 
-                                        if (leveledUp) member.send(`${member} you have leveled up to **level ${query.level}**.`);
-
                                         await query.save().catch((e) => {
                                             console.log(`Error saving updated level ${e}`);
                                             return;
@@ -110,8 +108,6 @@ module.exports = {
                                         });
 
                                         await newLevel.save();
-
-                                        if (leveledUp) member.send(`${member} you have leveled up to **level ${currentLevel}**.`);
 
                                     }
                                 }

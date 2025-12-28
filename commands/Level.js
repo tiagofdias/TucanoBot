@@ -151,13 +151,6 @@ module.exports = {
 
             }
 
-            if (leveledUp) {
-              const user = await interaction.client.users.fetch(userId);
-
-              user.send(`${user} you have leveled up to **level ${level}**.`);
-
-            }
-
             if (newXP <= 0) {
               newXP = 0;
               xplevel = 0;
@@ -186,13 +179,6 @@ module.exports = {
                 level++;
                 leveledUp = true;
               } else break;
-
-            }
-
-            if (leveledUp) {
-              const user = await interaction.client.users.fetch(userId);
-
-              user.send(`${user} you have leveled up to **level ${level}**.`);
 
             }
 
