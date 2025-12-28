@@ -13,7 +13,7 @@ module.exports = {
         ),
 
     async execute(interaction) {
-        await interaction.deferReply({ flags: 64 }); // Ephemeral reply (only visible to user)
+        await interaction.deferReply({ flags: 64 }); // Ephemeral reply
         
         const url = interaction.options.getString('url');
         
@@ -33,7 +33,7 @@ module.exports = {
 
         let browser;
         try {
-            // Launch browser with comprehensive cloud-compatible arguments
+            // Launch browser optimized for cloud environments (Render, Heroku, etc.)
             browser = await puppeteer.launch({ 
                 headless: 'new',
                 args: [
@@ -47,34 +47,52 @@ module.exports = {
                     '--disable-background-timer-throttling',
                     '--disable-backgrounding-occluded-windows',
                     '--disable-renderer-backgrounding',
+                    '--disable-features=TranslateUI',
+                    '--disable-ipc-flooding-protection',
                     '--no-first-run',
                     '--no-zygote',
                     '--single-process',
-                    '--window-size=1920,1080'
+                    '--disable-web-security',
+                    '--disable-features=site-per-process',
+                    '--js-flags=--max-old-space-size=512',
+                    '--window-size=1280,720'
                 ],
                 executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-                timeout: 60000
+                timeout: 120000
             });
             
             const page = await browser.newPage();
             
-            // Set viewport and realistic user agent
-            await page.setViewport({ width: 1920, height: 1080 });
+            // Use smaller viewport for faster rendering on limited resources
+            await page.setViewport({ width: 1280, height: 720 });
             await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36');
             
-            // Navigate with timeout
-            await page.goto(url, { 
-                waitUntil: 'networkidle0',
-                timeout: 30000 
+            // Block unnecessary resources to speed up loading
+            await page.setRequestInterception(true);
+            page.on('request', (req) => {
+                const resourceType = req.resourceType();
+                // Block heavy resources that aren't needed for screenshots
+                if (['media', 'font', 'websocket'].includes(resourceType)) {
+                    req.abort();
+                } else {
+                    req.continue();
+                }
             });
             
-            // Wait for dynamic content
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // Navigate with longer timeout and less strict wait condition
+            await page.goto(url, { 
+                waitUntil: 'domcontentloaded', // Faster than networkidle0
+                timeout: 60000 // Increased to 60 seconds
+            });
+            
+            // Brief wait for initial render
+            await new Promise(resolve => setTimeout(resolve, 1500));
             
             // Take screenshot
             const screenshot = await page.screenshot({ 
-                type: 'png',
-                fullPage: false // Viewport only
+                type: 'jpeg', // JPEG is faster and smaller than PNG
+                quality: 85,
+                fullPage: false
             });
             
             await browser.close();
@@ -82,7 +100,7 @@ module.exports = {
             
             // Create attachment
             const attachment = new AttachmentBuilder(screenshot, { 
-                name: 'screenshot.png',
+                name: 'screenshot.jpg',
                 description: `Screenshot of ${url}`
             });
             
@@ -90,7 +108,7 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setTitle('📸 Website Screenshot')
                 .setDescription(`**URL:** [${url}](${url})`)
-                .setImage('attachment://screenshot.png')
+                .setImage('attachment://screenshot.jpg')
                 .setColor('#5865F2')
                 .setFooter({ text: `Requested by ${interaction.user.username}` })
                 .setTimestamp();
@@ -105,21 +123,20 @@ module.exports = {
         } catch (error) {
             console.error(`Screenshot command error for ${url}:`, error.message);
             
-            // Determine error type for better feedback
+            // Better error classification
             let errorMessage = error.message;
             let suggestions = [
                 '• Website blocks automated access',
                 '• Page took too long to load',
-                '• Network or connection issues',
-                '• Invalid or inaccessible URL'
+                '• Network or connection issues'
             ];
             
             if (error.message.includes('timeout') || error.message.includes('Timeout')) {
-                errorMessage = 'The website took too long to respond (timeout after 30 seconds)';
+                errorMessage = 'The website took too long to respond';
                 suggestions = [
-                    '• The website may be slow or down',
-                    '• Try again in a few moments',
-                    '• Use a different URL'
+                    '• Complex websites with lots of JavaScript may timeout',
+                    '• Try a simpler website or the homepage instead of deep links',
+                    '• Try again in a few moments'
                 ];
             } else if (error.message.includes('net::ERR')) {
                 errorMessage = 'Network error - could not reach the website';
@@ -132,9 +149,9 @@ module.exports = {
             
             const errorEmbed = new EmbedBuilder()
                 .setTitle('❌ Screenshot Failed')
-                .setDescription(`**URL:** [${url}](${url})\n\n**Error:** ${errorMessage}\n\n**Possible reasons:**\n${suggestions.join('\n')}`)
+                .setDescription(`**URL:** [${url}](${url})\n\n**Error:** ${errorMessage}\n\n**Suggestions:**\n${suggestions.join('\n')}`)
                 .setColor('#ED4245')
-                .setFooter({ text: 'Please try again or use a different URL' });
+                .setFooter({ text: 'Try a simpler URL or try again later' });
             
             await interaction.editReply({ 
                 embeds: [errorEmbed],
@@ -142,7 +159,6 @@ module.exports = {
             });
             
         } finally {
-            // Ensure browser is always closed
             if (browser) {
                 try {
                     await browser.close();
