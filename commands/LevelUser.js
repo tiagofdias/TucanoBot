@@ -34,8 +34,8 @@ module.exports = {
       return;
     }
 
-    // Immediate acknowledgment to prevent timeout
-    await interaction.reply({ content: 'Processing your request...', flags: 64 });
+    // CRITICAL: Defer immediately to prevent timeout (deferReply gives 15 min instead of 3 sec)
+    await interaction.deferReply({ flags: 64 });
 
     switch (interaction.options.getSubcommand()) {
 
