@@ -3,6 +3,7 @@ const { Op, Sequelize, QueryTypes } = require('sequelize');
 
 // Lazy load heavy dependency when command actually runs to save RAM during idle.
 let canvacord;
+const ArtisticRankCardDesigner = require('../utils/ArtisticRankCardDesigner');
 const RankCardDesigner = require('../utils/RankCardDesigner');
 const CleanRankCardDesigner = require('../utils/CleanRankCardDesigner');
 const Level = require('../models/Level');
@@ -104,9 +105,9 @@ module.exports = {
       }
 
       try {
-        // Use the beautiful clean rank card designer
-        const cleanRankCardDesigner = new CleanRankCardDesigner();
-        const cardBuffer = await cleanRankCardDesigner.createRankCard({
+        // Use the beautiful artistic rank card designer (primary)
+        const artisticDesigner = new ArtisticRankCardDesigner();
+        const cardBuffer = await artisticDesigner.createRankCard({
           username: username,
           avatar: member.user.displayAvatarURL({ extension: 'png', size: 256 }),
           level: level,
@@ -120,7 +121,7 @@ module.exports = {
         await interaction.editReply({ content: '', files: [attachment] });
 
       } catch (cardError) {
-        console.error('Clean rank card failed, trying original:', cardError);
+        console.error('Artistic rank card failed, trying clean design:', cardError);
         
         // Fallback to original custom designer
         try {
