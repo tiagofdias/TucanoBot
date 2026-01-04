@@ -9,8 +9,17 @@ const REDIRECT_URI = process.env.REDIRECT_URI ||
         ? 'https://tucanobot-zdbi.onrender.com/api/auth/callback'
         : 'http://localhost:3000/api/auth/callback');
 
+// Debug: Log OAuth config on startup (without revealing secrets)
+console.log('[OAuth] Config loaded:');
+console.log('[OAuth] CLIENT_ID:', CLIENT_ID ? `${CLIENT_ID.substring(0, 6)}...` : 'NOT SET');
+console.log('[OAuth] CLIENT_SECRET:', CLIENT_SECRET ? `${CLIENT_SECRET.substring(0, 4)}...` : 'NOT SET');
+console.log('[OAuth] REDIRECT_URI:', REDIRECT_URI);
+
 // Redirect to Discord OAuth2
 router.get('/login', (req, res) => {
+    if (!CLIENT_ID) {
+        return res.status(500).send('OAuth not configured: CLIENT_ID missing');
+    }
     const params = new URLSearchParams({
         client_id: CLIENT_ID,
         redirect_uri: REDIRECT_URI,
@@ -26,6 +35,11 @@ router.get('/callback', async (req, res) => {
     
     if (!code) {
         return res.redirect('/dashboard?error=no_code');
+    }
+
+    if (!CLIENT_ID || !CLIENT_SECRET) {
+        console.error('[OAuth] Missing credentials - CLIENT_ID:', !!CLIENT_ID, 'CLIENT_SECRET:', !!CLIENT_SECRET);
+        return res.redirect('/dashboard?error=config_error');
     }
 
     try {
@@ -45,7 +59,7 @@ router.get('/callback', async (req, res) => {
         const tokens = await tokenResponse.json();
         
         if (tokens.error) {
-            console.error('Token error:', tokens);
+            console.error('[OAuth] Token error:', tokens.error, '-', tokens.error_description);
             return res.redirect('/dashboard?error=token_error');
         }
 
