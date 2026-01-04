@@ -96,8 +96,15 @@ router.post('/login', express.urlencoded({ extended: true }), (req, res) => {
         };
         req.session.guilds = GUILD_ID ? [{ id: GUILD_ID, name: 'Managed Server' }] : [];
         
-        console.log('[Auth] Admin logged in successfully');
-        res.redirect('/dashboard');
+        // Save session explicitly before redirect
+        req.session.save((err) => {
+            if (err) {
+                console.error('[Auth] Session save error:', err);
+                return res.redirect('/api/auth/login?error=session');
+            }
+            console.log('[Auth] Admin logged in successfully');
+            res.redirect('/dashboard');
+        });
     } else {
         console.log('[Auth] Failed login attempt');
         res.redirect('/api/auth/login?error=invalid');
