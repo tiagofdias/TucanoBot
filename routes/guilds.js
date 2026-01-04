@@ -13,8 +13,19 @@ const requireAuth = (req, res, next) => {
 // Middleware to check guild permission
 const requireGuildPermission = (req, res, next) => {
     const guildId = req.params.guildId;
-    const userGuilds = req.session.guilds || [];
     
+    // Admin users have access to all guilds the bot is in
+    if (req.session.isAdmin) {
+        const botClient = global.discordClient;
+        if (botClient && botClient.guilds.cache.has(guildId)) {
+            req.guild = { id: guildId };
+            return next();
+        }
+        return res.status(404).json({ error: 'Bot is not in this guild' });
+    }
+    
+    // OAuth users need permission check
+    const userGuilds = req.session.guilds || [];
     const guild = userGuilds.find(g => g.id === guildId);
     if (!guild) {
         return res.status(403).json({ error: 'Guild not found' });
@@ -33,6 +44,27 @@ const requireGuildPermission = (req, res, next) => {
 // Get guilds user can manage (that the bot is in)
 router.get('/', requireAuth, async (req, res) => {
     try {
+        // Get bot's client from global scope (set in index.js)
+        const botClient = global.discordClient;
+        
+        if (!botClient) {
+            return res.status(500).json({ error: 'Bot client not available' });
+        }
+
+        // For admin auth, return all guilds the bot is in
+        if (req.session.isAdmin) {
+            const botGuilds = botClient.guilds.cache.map(guild => ({
+                id: guild.id,
+                name: guild.name,
+                icon: guild.icon,
+                iconUrl: guild.icon 
+                    ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`
+                    : null
+            }));
+            return res.json(botGuilds);
+        }
+
+        // For OAuth users, filter by their guilds
         const userGuilds = req.session.guilds || [];
         
         // Filter guilds where user has MANAGE_GUILD permission
@@ -41,12 +73,9 @@ router.get('/', requireAuth, async (req, res) => {
             return hasPermission;
         });
 
-        // Get bot's client from global scope (set in index.js)
-        const botClient = global.discordClient;
-        
         // Filter to only include guilds where bot is present
         const botGuilds = manageableGuilds.filter(guild => {
-            return botClient && botClient.guilds.cache.has(guild.id);
+            return botClient.guilds.cache.has(guild.id);
         }).map(guild => ({
             id: guild.id,
             name: guild.name,
