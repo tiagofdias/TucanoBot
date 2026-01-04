@@ -60,9 +60,30 @@ module.exports = {
   // Progress inside current level already stored, but recompute for safety
   const levelStart = cumulative(level);
   const nextLevelStart = cumulative(level + 1);
-  let currentXP = count.xp - levelStart; // ensure aligned with total xp
-  if (currentXP < 0) currentXP = 0; // guard against legacy data
+  
+  // Debug: Log the XP values to diagnose the issue
+  console.log('[Rank Debug] User:', targetUser.username);
+  console.log('[Rank Debug] Stored level:', level);
+  console.log('[Rank Debug] Stored xp:', count.xp);
+  console.log('[Rank Debug] Stored xplevel:', count.xplevel);
+  console.log('[Rank Debug] levelStart:', levelStart);
+  console.log('[Rank Debug] nextLevelStart:', nextLevelStart);
+  
+  // The stored 'xp' appears to be TOTAL XP earned, not cumulative XP to reach current level
+  // If xp < levelStart, then xp might actually be the progress within current level, not total
+  let currentXP;
+  if (count.xp < levelStart) {
+    // XP is stored as progress within current level (xplevel field?)
+    currentXP = count.xplevel || count.xp;
+  } else {
+    // XP is cumulative total
+    currentXP = count.xp - levelStart;
+  }
+  if (currentXP < 0) currentXP = 0;
   let requiredXP = nextLevelStart - levelStart;
+  
+  console.log('[Rank Debug] Calculated currentXP:', currentXP);
+  console.log('[Rank Debug] Calculated requiredXP:', requiredXP);
       let username = member.user.username;
       let discriminator = member.user.discriminator;
       let status = member.presence?.status || 'offline';
