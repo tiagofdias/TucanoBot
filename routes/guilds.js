@@ -47,8 +47,16 @@ router.get('/', requireAuth, async (req, res) => {
         // Get bot's client from global scope (set in index.js)
         const botClient = global.discordClient;
         
+        console.log('[Guilds API] botClient exists:', !!botClient);
+        console.log('[Guilds API] botClient.isReady():', botClient?.isReady?.());
+        console.log('[Guilds API] guilds.cache.size:', botClient?.guilds?.cache?.size);
+        
         if (!botClient) {
             return res.status(500).json({ error: 'Bot client not available' });
+        }
+        
+        if (!botClient.isReady || !botClient.isReady()) {
+            return res.status(503).json({ error: 'Bot is still connecting to Discord' });
         }
 
         // For admin auth, return all guilds the bot is in
@@ -61,6 +69,7 @@ router.get('/', requireAuth, async (req, res) => {
                     ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`
                     : null
             }));
+            console.log('[Guilds API] Returning', botGuilds.length, 'guilds for admin');
             return res.json(botGuilds);
         }
 
