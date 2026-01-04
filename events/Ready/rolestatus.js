@@ -30,9 +30,10 @@ module.exports = {
 
                             if (queryResult) {
                                 const role = guild.roles.cache.get(queryResult.RoleID);
-                                // Fetch with timeout to avoid blocking
-                                await guild.members.fetch().catch(err => console.log('Could not fetch members:', err.message));
-
+                                if (!role) return; // Role doesn't exist anymore
+                                
+                                // Use cached members instead of fetching all members
+                                // This is much more efficient and won't timeout on Render
                                 const membersNotInVoice = guild.members.cache.filter((member) => {
                                     return member.roles.cache.has(role.id) && !member.voice.channel;
                                 });
