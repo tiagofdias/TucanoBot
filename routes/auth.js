@@ -46,7 +46,11 @@ router.get('/callback', async (req, res) => {
         // Exchange code for token
         const tokenResponse = await fetch(`${DISCORD_API}/oauth2/token`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: { 
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'User-Agent': 'TucanoBot/1.0 (+https://tucanobot-zdbi.onrender.com)',
+                'Accept': 'application/json'
+            },
             body: new URLSearchParams({
                 client_id: CLIENT_ID,
                 client_secret: CLIENT_SECRET,
