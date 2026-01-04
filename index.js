@@ -64,29 +64,35 @@ for (const file of commandFiles) {
 
 const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
 
-(async () => {
-  try {
-    console.log(`Started refreshing ${commands.length} application (/) commands.`);
+// ONLY deploy commands when DEPLOY_COMMANDS=true (set manually when commands change)
+// Deploying 21 commands on every startup wastes time and causes interaction timeouts
+if (process.env.DEPLOY_COMMANDS === 'true') {
+  (async () => {
+    try {
+      console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
-    // Deploy global commands
-    const globalData = await rest.put(
-      Routes.applicationCommands(process.env.CLIENT_ID),
-      { body: commands },
-    );
+      // Deploy global commands
+      const globalData = await rest.put(
+        Routes.applicationCommands(process.env.CLIENT_ID),
+        { body: commands },
+      );
 
-    console.log(`Successfully deployed ${globalData.length} global application (/) commands.`);
+      console.log(`Successfully deployed ${globalData.length} global application (/) commands.`);
 
-    // Deploy guild-specific commands
-    const guildData = await rest.put(
-      Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
-      { body: guildCommands },
-    );
+      // Deploy guild-specific commands
+      const guildData = await rest.put(
+        Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
+        { body: guildCommands },
+      );
 
-    console.log(`Successfully deployed ${guildData.length} guild-specific application (/) commands.`);
-  } catch (error) {
-    console.error(error);
-  }
-})();
+      console.log(`Successfully deployed ${guildData.length} guild-specific application (/) commands.`);
+    } catch (error) {
+      console.error(error);
+    }
+  })();
+} else {
+  console.log('Skipping command deployment (set DEPLOY_COMMANDS=true to deploy)');
+}
 
 /* const eventsPath = path.join(__dirname, 'events');
 const eventFiles = fs.readdirSync(eventsPath).filter((file) => file.endsWith('.js'));
