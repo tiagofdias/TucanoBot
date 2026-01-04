@@ -19,6 +19,12 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
+
+// Trust Render's reverse proxy (required for secure cookies)
+if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1);
+}
+
 app.use(session({
     secret: process.env.SESSION_SECRET || 'tucanobot-secret-key-change-in-production',
     resave: false,
@@ -26,6 +32,7 @@ app.use(session({
     cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     }
 }));
