@@ -56,6 +56,17 @@ router.get('/callback', async (req, res) => {
             })
         });
 
+        // Check if response is JSON before parsing
+        const contentType = tokenResponse.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const rawText = await tokenResponse.text();
+            console.error('[OAuth] Discord returned non-JSON response:');
+            console.error('[OAuth] Status:', tokenResponse.status);
+            console.error('[OAuth] Content-Type:', contentType);
+            console.error('[OAuth] Body preview:', rawText.substring(0, 500));
+            return res.redirect('/dashboard?error=discord_error');
+        }
+
         const tokens = await tokenResponse.json();
         
         if (tokens.error) {
