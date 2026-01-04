@@ -118,8 +118,11 @@ class BirthdayCardDesigner {
   drawUserInfo(birthdayData, x, y) {
     const ctx = this.ctx;
     
-    // Username - sanitize to remove emojis and special characters that the font can't render
-    const sanitizedUsername = birthdayData.username.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F000}-\u{1F02F}]|[\u{1F0A0}-\u{1F0FF}]|[\u{1F100}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{FE00}-\u{FE0F}]|[\u200D]/gu, '').trim();
+    // Username - sanitize to remove emojis, special Unicode, and Discord decorations
+    // Keep only printable ASCII and common Latin characters
+    const sanitizedUsername = birthdayData.username
+      .replace(/[^\x20-\x7E\u00C0-\u00FF]/g, '') // Keep ASCII + Latin Extended
+      .trim();
     ctx.fillStyle = '#FFFFFF';
     ctx.font = 'bold 24px Poppins, Arial, sans-serif';
     ctx.textAlign = 'left';
