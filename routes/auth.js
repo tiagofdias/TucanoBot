@@ -1,104 +1,106 @@
 const express = require('express');
 const router = express.Router();
 
-const DISCORD_API = 'https://discord.com/api/v10';
-const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const REDIRECT_URI = process.env.REDIRECT_URI || 
-    (process.env.NODE_ENV === 'production' 
-        ? 'https://tucanobot-zdbi.onrender.com/api/auth/callback'
-        : 'http://localhost:3000/api/auth/callback');
+// Admin Key Authentication (bypasses Discord OAuth which is blocked by Cloudflare)
+const ADMIN_KEY = process.env.ADMIN_KEY || 'tucano-admin-2024';
+const GUILD_ID = process.env.GUILD_ID;
 
-// Debug: Log OAuth config on startup (without revealing secrets)
-console.log('[OAuth] Config loaded:');
-console.log('[OAuth] CLIENT_ID:', CLIENT_ID ? `${CLIENT_ID.substring(0, 6)}...` : 'NOT SET');
-console.log('[OAuth] CLIENT_SECRET:', CLIENT_SECRET ? `${CLIENT_SECRET.substring(0, 4)}...` : 'NOT SET');
-console.log('[OAuth] REDIRECT_URI:', REDIRECT_URI);
+console.log('[Auth] Admin key authentication enabled');
+console.log('[Auth] GUILD_ID:', GUILD_ID ? `${GUILD_ID.substring(0, 6)}...` : 'NOT SET');
 
-// Redirect to Discord OAuth2
+// Login page - show a simple form
 router.get('/login', (req, res) => {
-    if (!CLIENT_ID) {
-        return res.status(500).send('OAuth not configured: CLIENT_ID missing');
+    // If already logged in, redirect to dashboard
+    if (req.session.isAdmin) {
+        return res.redirect('/dashboard');
     }
-    const params = new URLSearchParams({
-        client_id: CLIENT_ID,
-        redirect_uri: REDIRECT_URI,
-        response_type: 'code',
-        scope: 'identify guilds'
-    });
-    res.redirect(`https://discord.com/oauth2/authorize?${params}`);
+    
+    res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>TucanoBot Dashboard - Login</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { 
+                    font-family: 'Segoe UI', sans-serif;
+                    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #fff;
+                }
+                .login-box {
+                    background: rgba(255,255,255,0.1);
+                    backdrop-filter: blur(10px);
+                    padding: 40px;
+                    border-radius: 20px;
+                    text-align: center;
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+                }
+                h1 { margin-bottom: 10px; }
+                p { color: #aaa; margin-bottom: 30px; }
+                input {
+                    width: 100%;
+                    padding: 15px;
+                    margin-bottom: 20px;
+                    border: none;
+                    border-radius: 10px;
+                    background: rgba(255,255,255,0.1);
+                    color: #fff;
+                    font-size: 16px;
+                }
+                input::placeholder { color: #888; }
+                button {
+                    width: 100%;
+                    padding: 15px;
+                    border: none;
+                    border-radius: 10px;
+                    background: #5865F2;
+                    color: #fff;
+                    font-size: 16px;
+                    cursor: pointer;
+                    transition: background 0.3s;
+                }
+                button:hover { background: #4752c4; }
+                .error { color: #ff6b6b; margin-bottom: 20px; }
+            </style>
+        </head>
+        <body>
+            <div class="login-box">
+                <h1>🦜 TucanoBot</h1>
+                <p>Enter admin key to access dashboard</p>
+                ${req.query.error ? '<p class="error">Invalid admin key</p>' : ''}
+                <form method="POST" action="/api/auth/login">
+                    <input type="password" name="adminKey" placeholder="Admin Key" required>
+                    <button type="submit">Login</button>
+                </form>
+            </div>
+        </body>
+        </html>
+    `);
 });
 
-// OAuth2 callback
-router.get('/callback', async (req, res) => {
-    const { code } = req.query;
+// Handle login POST
+router.post('/login', express.urlencoded({ extended: true }), (req, res) => {
+    const { adminKey } = req.body;
     
-    if (!code) {
-        return res.redirect('/dashboard?error=no_code');
-    }
-
-    if (!CLIENT_ID || !CLIENT_SECRET) {
-        console.error('[OAuth] Missing credentials - CLIENT_ID:', !!CLIENT_ID, 'CLIENT_SECRET:', !!CLIENT_SECRET);
-        return res.redirect('/dashboard?error=config_error');
-    }
-
-    try {
-        // Exchange code for token
-        const tokenResponse = await fetch(`${DISCORD_API}/oauth2/token`, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'User-Agent': 'TucanoBot/1.0 (+https://tucanobot-zdbi.onrender.com)',
-                'Accept': 'application/json'
-            },
-            body: new URLSearchParams({
-                client_id: CLIENT_ID,
-                client_secret: CLIENT_SECRET,
-                grant_type: 'authorization_code',
-                code,
-                redirect_uri: REDIRECT_URI
-            })
-        });
-
-        // Check if response is JSON before parsing
-        const contentType = tokenResponse.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            const rawText = await tokenResponse.text();
-            console.error('[OAuth] Discord returned non-JSON response:');
-            console.error('[OAuth] Status:', tokenResponse.status);
-            console.error('[OAuth] Content-Type:', contentType);
-            console.error('[OAuth] Body preview:', rawText.substring(0, 500));
-            return res.redirect('/dashboard?error=discord_error');
-        }
-
-        const tokens = await tokenResponse.json();
+    if (adminKey === ADMIN_KEY) {
+        // Set session as admin
+        req.session.isAdmin = true;
+        req.session.user = {
+            id: 'admin',
+            username: 'Admin',
+            avatar: null
+        };
+        req.session.guilds = GUILD_ID ? [{ id: GUILD_ID, name: 'Managed Server' }] : [];
         
-        if (tokens.error) {
-            console.error('[OAuth] Token error:', tokens.error, '-', tokens.error_description);
-            return res.redirect('/dashboard?error=token_error');
-        }
-
-        // Get user info
-        const userResponse = await fetch(`${DISCORD_API}/users/@me`, {
-            headers: { Authorization: `Bearer ${tokens.access_token}` }
-        });
-        const user = await userResponse.json();
-
-        // Get user's guilds
-        const guildsResponse = await fetch(`${DISCORD_API}/users/@me/guilds`, {
-            headers: { Authorization: `Bearer ${tokens.access_token}` }
-        });
-        const guilds = await guildsResponse.json();
-
-        // Store in session
-        req.session.user = user;
-        req.session.guilds = guilds;
-        req.session.accessToken = tokens.access_token;
-
+        console.log('[Auth] Admin logged in successfully');
         res.redirect('/dashboard');
-    } catch (error) {
-        console.error('Auth error:', error);
-        res.redirect('/dashboard?error=auth_failed');
+    } else {
+        console.log('[Auth] Failed login attempt');
+        res.redirect('/api/auth/login?error=invalid');
     }
 });
 
@@ -110,7 +112,7 @@ router.get('/logout', (req, res) => {
 
 // Get current user
 router.get('/me', (req, res) => {
-    if (!req.session.user) {
+    if (!req.session.isAdmin) {
         return res.status(401).json({ error: 'Not authenticated' });
     }
     res.json({
