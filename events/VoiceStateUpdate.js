@@ -453,7 +453,7 @@ module.exports = {
       if (QueryRoleStatus2) newState.member.roles.remove(QueryRoleStatus2.RoleID);
     }
 
-    if (jointocreate && oldChannel.id === jointocreate && (!newChannel || newChannel.id !== jointocreate)) {
+    if (jointocreate && oldChannel && oldChannel.id === jointocreate && (!newChannel || newChannel.id !== jointocreate)) {
 
       if (members.length > 0) {
 
