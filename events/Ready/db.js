@@ -27,63 +27,33 @@ module.exports = {
     async execute(client) {
         db.authenticate()
             .then(async () => {
-
-                // config.init(db); // initiates the table config
-                // config.sync(); //creates the table, if it doesn't already exist
-
+                // Initialize all models (this is lightweight, just sets up the model)
                 AutoDelete.init(db);
-                AutoDelete.sync();
-
                 VanityRoles.init(db);
-                VanityRoles.sync();
-
                 RoleStatus.init(db);
-                RoleStatus.sync();
-
                 PersistantRoles.init(db);
-                PersistantRoles.sync();
-
                 PersistantRoles2.init(db);
-                PersistantRoles2.sync();
-
                 AutoRole.init(db);
-                AutoRole.sync();
-
                 AutoPublish.init(db);
-                AutoPublish.sync();
-
                 Suggestions.init(db);
-                Suggestions.sync();
-
                 TempVCS.init(db);
-                TempVCS.sync();
-
                 Level.init(db);
-                Level.sync();
-
                 LevelConfig.init(db);
-                LevelConfig.sync();
-
                 LevelRoleMultiplier.init(db);
-                LevelRoleMultiplier.sync();
-
                 BenficaDay.init(db);
-                BenficaDay.sync();
-
                 Birthday.init(db);
-                Birthday.sync();
-
                 BirthdayConfig.init(db);
-                BirthdayConfig.sync();
-
                 ActiveRoles.init(db);
-                ActiveRoles.sync();
-
                 ActiveRolesConfig.init(db);
-                ActiveRolesConfig.sync();
-
                 VoiceLogs.init(db);
-                VoiceLogs.sync();
+
+                // ONLY sync tables when SYNC_DATABASE=true (for initial setup)
+                // Syncing 18+ tables on every startup causes massive delays and interaction timeouts
+                if (process.env.SYNC_DATABASE === 'true') {
+                    console.log('Syncing database tables...');
+                    await db.sync();
+                    console.log('Database sync complete');
+                }
 
                 console.log(`Ready! Logged in as ${client.user.tag}`);
             })
