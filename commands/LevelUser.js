@@ -134,8 +134,18 @@ module.exports = {
               const cumulative = require('../utils/CalculateLevelXP');
               const levelStart = cumulative(level.level);
               const nextLevelStart = cumulative(level.level + 1);
-              let currentXP = level.xp - levelStart; // XP progress in current level
-              if (currentXP < 0) currentXP = 0; // guard against legacy data
+              
+              // Fix: Check if stored xp matches cumulative formula
+              // If not, use xplevel field (legacy data compatibility)
+              let currentXP;
+              if (level.xp < levelStart) {
+                // XP is stored as progress within current level
+                currentXP = level.xplevel || level.xp;
+              } else {
+                // XP is cumulative total
+                currentXP = level.xp - levelStart;
+              }
+              if (currentXP < 0) currentXP = 0;
               let requiredXP = nextLevelStart - levelStart; // XP needed for next level
               
               return {
