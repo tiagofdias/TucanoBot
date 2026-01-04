@@ -228,8 +228,23 @@ module.exports = {
         newChannel.permissionOverwrites.delete(member);
       }, 30000)
 
-      return setTimeout(() => {
-        member.voice.setChannel(voiceChannel);
+      return setTimeout(async () => {
+        // Check if member is still connected to voice before moving
+        if (!member.voice.channel) {
+          // Member disconnected, clean up the empty channel
+          voiceChannel.delete().catch(() => null);
+          voiceManager.set(member.id, null);
+          return;
+        }
+        
+        try {
+          await member.voice.setChannel(voiceChannel);
+        } catch (error) {
+          console.error('Failed to move member to temp VC:', error.message);
+          voiceChannel.delete().catch(() => null);
+          voiceManager.set(member.id, null);
+          return;
+        }
 
         // ✅ Step 1: Give the channel creator ManageChannels permission
         voiceChannel.permissionOverwrites.edit(member, {
@@ -444,6 +459,13 @@ module.exports = {
 
         let randomID = members[Math.floor(Math.random() * members.length)];
         let randomMember = guild.members.cache.get(randomID);
+
+        // Check if randomMember is still connected to voice
+        if (!randomMember || !randomMember.voice.channel) {
+          voiceManager.set(member.id, null);
+          oldChannel.delete().catch(() => null);
+          return;
+        }
 
         randomMember.voice.setChannel(oldChannel).then((v) => {
           //oldChannel.setName(randomMember.user.username).catch((e) => null);
