@@ -178,7 +178,12 @@ module.exports = {
                         .setColor('#FF4444')
                         .setFooter({ text: 'TucanoBot Error System' });
                     
-                    await interaction.editReply({ content: '', embeds: [errorEmbed] });
+                    // Check if we already replied before calling editReply
+                    if (interaction.replied || interaction.deferred) {
+                        await interaction.editReply({ content: '', embeds: [errorEmbed] }).catch(() => {});
+                    } else {
+                        await interaction.reply({ embeds: [errorEmbed], ephemeral: true }).catch(() => {});
+                    }
                 }
 
                 break;
