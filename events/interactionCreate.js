@@ -17,6 +17,18 @@ module.exports = {
 		} catch (error) {
 			console.error(`Error executing ${interaction.commandName}`);
 			console.error(error);
+			
+			// Try to respond to the user so they don't see "Application did not respond"
+			try {
+				const errorMessage = { content: 'There was an error executing this command.', flags: 64 };
+				if (interaction.replied || interaction.deferred) {
+					await interaction.followUp(errorMessage);
+				} else {
+					await interaction.reply(errorMessage);
+				}
+			} catch (replyError) {
+				console.error('Failed to send error response:', replyError);
+			}
 		}
 	},
 };
