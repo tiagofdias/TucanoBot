@@ -4,7 +4,10 @@ const router = express.Router();
 const DISCORD_API = 'https://discord.com/api/v10';
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const REDIRECT_URI = process.env.REDIRECT_URI || 'http://localhost:3000/api/auth/callback';
+const REDIRECT_URI = process.env.REDIRECT_URI || 
+    (process.env.NODE_ENV === 'production' 
+        ? 'https://tucanobot-zdbi.onrender.com/api/auth/callback'
+        : 'http://localhost:3000/api/auth/callback');
 
 // Redirect to Discord OAuth2
 router.get('/login', (req, res) => {
